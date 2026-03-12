@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Jero</title>
+    <style>
+:root {
+    --bg-color: #f0f2f5;
+    --card-bg: #ffffff;
+    --text-primary: #1c1e21;
+    --text-secondary: #606770;
+    --border-color: #dddfe2;
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --activity-bg: #ffffff;
+    
+    --status-pos: #28a745;
+    --status-neg: #dc3545;
+}
+
+body.dark-mode {
+    --bg-color: #18191a;
+    --card-bg: #242526;
+    --text-primary: #f5f6f7; /* Un poco más brillante para contraste */
+    --text-secondary: #b0b3b8;
+    --border-color: #3e4042;
+    --shadow: 0 4px 12px rgba(0,0,0,0.5);
+    --activity-bg: #3a3b3c; /* Gris más claro que el fondo para que la tarjeta se vea */
+    
+    --status-pos: #45d66f;
+    --status-neg: #ff5e7d;
+}
+
+/* Estilos para los contadores de la cabecera de recompensas */
+#puntajeDisplay {
+    color: var(--text-primary) !important; /* Blanco en dark, Negro en light */
+    font-size: 2.2rem; /* Un poco más grande para que Jero se emocione */
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 5px;
+    transition: color 0.3s ease;
+}
+
+#metaDisplay {
+    color: var(--text-secondary) !important;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+/* Ajuste de alineación para que los puntos y la meta se vean ordenados */
+.recompensas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+/* Aplicación a las tarjetas de actividades */
+.activity-item {
+    background-color: var(--activity-bg) !important;
+    border: 1px solid var(--border-color);
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    /* En lugar de opacity en el div, usamos color tenue para lo no alcanzado */
+    color: var(--text-secondary); 
+}
+
+/* Forzar que el texto interno cambie con el tema */
+.activity-item span, .activity-item strong {
+    color: inherit; /* Hereda el color del padre (.activity-item) */
+}
+
+/* Cuando se alcanza la recompensa */
+.activity-item.reached {
+    color: var(--text-primary); /* Texto fuerte y claro */
+    box-shadow: var(--shadow);
+    transform: translateX(5px); /* Pequeño desplazamiento visual */
+}
+
+/* Estilos para los números grandes de puntos */
+#puntajeDisplay { color: var(--text-primary); font-weight: 800; }
+#metaDisplay { color: var(--text-secondary); }
+/* El texto dentro de las tarjetas */
+.activity-item span, .activity-item strong {
+    color: var(--text-primary);
+}
+
+/* Ajuste específico para que el contador de puntos resalte */
+#puntajeDisplay {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+#metaDisplay {
+    color: var(--text-secondary);
+}
+
+/* El puntaje principal ahora usará el color de texto del tema */
+#puntajeDisplay, #metaDisplay {
+    color: var(--text-primary);
+}
+
+/* Forzar que el texto de la tabla use la variable */
+table th {
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+table td {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s; /* Para que el cambio sea suave */
+}
+
+/* Actualiza tus clases existentes para que usen las variables */
+.header-card, .content-card, .modal-content, .config-section {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.activity-item {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+}
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); margin: 0; padding: 20px; color: var(--text-main); display: flex; justify-content: center; min-height: 100vh; }
+        .main-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 20px; }
+        @media (orientation: portrait) { .main-container { width: 60%; margin: 0 auto; } }
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: flex; flex-direction: column; gap: 20px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .header-card { background-color: var(--card-bg); border-radius: 12px; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 15px; }
+        .header-card h1 { margin: 0; color: var(--primary-blue); font-size: 22px; }
+        .user-controls { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .profile-toggle-wrapper { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .content-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .panel { background-color: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .panel-title { margin-top: 0; margin-bottom: 20px; font-size: 18px; color: var(--text-secondary); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-weight: bold; font-size: 18px; }
+        .activity-list { display: flex; flex-direction: column; gap: 8px; }
+        .activity-item { padding: 12px 16px; border-radius: 8px; background-color: #f8f9fa; border-left: 6px solid #ced4da; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; font-size: 15px; }
+        .activity-item.reached { background-color: var(--primary-blue-light); color: var(--primary-blue); font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 14px 10px; border-bottom: 1px solid var(--border-color); }
+        th { color: var(--text-secondary); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .action-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+        button { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; text-align: center; }
+        .btn-primary { background-color: var(--primary-blue); color: white; }
+        .btn-primary:hover { background-color: var(--primary-blue-hover); }
+        .btn-positive { background-color: var(--btn-green); color: white; }
+        .btn-positive:hover { background-color: var(--btn-green-hover); }
+        .btn-negative { background-color: var(--btn-red); color: white; }
+        .btn-negative:hover { background-color: var(--btn-red-hover); }
+        .btn-secondary { background-color: var(--btn-gray); color: var(--text-main); }
+        .btn-secondary:hover { background-color: var(--btn-gray-hover); }
+        .btn-icon { padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal { background: var(--card-bg); padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: var(--text-secondary); }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 15px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 2px var(--primary-blue-light); }
+        .config-row { display: grid; grid-template-columns: 3fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .config-list { max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px; }
+
+        @media (max-width: 600px) {
+            .main-container { width: 100%; }
+            body { padding: 10px; }
+            .header-card { flex-direction: column; text-align: center; padding: 15px; }
+            .user-controls { width: 100%; justify-content: center; }
+            .panel { padding: 15px; }
+            .action-buttons button { flex: 1; min-width: 120px; }
+            .config-row { grid-template-columns: 1fr 1fr auto; }
+            th, td { padding: 8px 4px; font-size: 12px; }
+            .activity-item { flex-direction: column; align-items: flex-start; gap: 5px; }
+        }
+        @media (max-width: 900px) { .content-grid { grid-template-columns: 1fr; } }
+		
+		
+/* Panel de Motivación con cambio de color constante */
+.motivation-card {
+    /* Color base vibrante */
+    background: linear-gradient(135deg, #00dbde 0%, #fc00ff 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 18px 25px;
+    margin-top: 15px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    
+    /* ANIMACIÓN TRIPLE: 
+       1. hueCycle: Cambia los colores (el tono)
+       2. float: Movimiento sutil arriba/abajo
+       3. pulse: Un pequeño cambio de escala para que "respire" 
+    */
+    animation: 
+        hueCycle 10s linear infinite, 
+        float 4s ease-in-out infinite,
+        pulse 5s ease-in-out infinite;
+}
+
+/* Efecto de brillo que pasa por encima (Shimmer) */
+.motivation-card::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom right,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.1) 50%,
+        rgba(255,255,255,0) 100%
+    );
+    transform: rotate(45deg);
+    animation: shimmer 6s infinite;
+}
+
+/* --- KEYFRAMES --- */
+
+/* Esta es la magia: rota los colores 360 grados */
+@keyframes hueCycle {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); }
+    50% { box-shadow: 0 12px 30px rgba(110, 142, 251, 0.4); }
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-150%) rotate(45deg); }
+    100% { transform: translateX(150%) rotate(45deg); }
+}
+
+.motivation-text {
+    font-size: 16px;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    z-index: 1; /* Para que esté sobre el brillo */
+}
+		
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div id="viewDashboard" class="view-section active">
+            <div class="header-card">
+    <h1>Seguimiento Jero</h1>
+    <div class="user-controls">
+        <button id="themeToggle" class="btn-secondary btn-icon" onclick="toggleTheme()" title="Cambiar Tema">
+            🌙
+        </button>
+
+        <div class="profile-toggle-wrapper" style="margin-left: 10px;">
+            👦 Jero
+            <label class="switch">
+                <input type="checkbox" id="profileToggle" onchange="handleProfileToggle(this)">
+                <span class="slider"></span>
+            </label>
+            👨‍👩‍👦 Padres
+        </div>
+        <button id="btnConfig" class="btn-secondary btn-icon" style="display: none; margin-left: 10px;" onclick="showView('viewConfig')" title="Configurar Semana">⚙️</button>
+    </div>
+</div>
+
+<div class="motivation-card" id="motivationPanel" style="display: none;">
+    <div class="motivation-icon">🚀</div>
+    <div class="motivation-text" id="motivationMsg">
+        "¡Cargando tu reto de hoy, Jero! Vamos por esos puntos."
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+            <div class="content-grid">
+                <div class="panel">
+                    <h2 class="panel-title">Recompensas</h2>
+                    <div class="progress-header">
+                        <span id="puntajeDisplay" style="color: var(--primary-blue); font-size: 24px;">Cargando...</span>
+                        <span id="metaDisplay" style="color: var(--text-secondary);">Meta: --</span>
+                    </div>
+                    <div class="activity-list" id="activityList">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 20px;">Conectando con Dataverse...</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2 class="panel-title">Historial de la semana</h2>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+    <tr>
+        <th>Fecha</th>
+        <th>Autor</th>
+        <th>Comentario</th>
+        <th style="text-align: center;">Pts</th> <th>Resultado</th>
+    </tr>
+</thead>
+                            <tbody id="historyTableBody">
+                                <tr><td colspan="4" style="text-align: center; padding: 20px;">Cargando historial...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="action-buttons" id="adminControls" style="display: none;">
+                        <button class="btn-positive" onclick="openModal('Positivo', 5)">+ 5 Puntos</button>
+                        <button class="btn-negative" onclick="openModal('Negativo', -5)">- 5 Puntos</button>
+                        <button class="btn-secondary" onclick="openModal('Neutro', 0)">Comentario</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="viewConfig" class="view-section">
+            <div class="header-card">
+                <h1>Configuración</h1>
+                <button class="btn-secondary" onclick="showView('viewDashboard')">Volver al Tablero</button>
+            </div>
+            <div class="panel">
+                <h2 class="panel-title">Ajustes Generales</h2>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label>Meta de Puntos Semanal</label>
+                        <input type="number" id="configMeta" value="50">
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label>Contraseña de Padres</label>
+                        <input type="password" id="configPassword" placeholder="Nueva contraseña (opcional)">
+                    </div>
+                </div>
+                <h2 class="panel-title" style="margin-top: 20px;">Lista de Recompensas</h2>
+                <div class="config-list" id="configActivityList"></div>
+                <button class="btn-secondary" onclick="addConfigRow()" style="margin-bottom: 20px;">+ Añadir Actividad</button>
+                <div style="border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: flex-end;">
+                    <button class="btn-primary" onclick="saveConfig()">Guardar Configuración</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalPasswordOverlay">
+        <div class="modal" style="max-width: 350px; text-align: center;">
+            <h2 style="margin-top: 0; color: var(--primary-blue);">Acceso Padres</h2>
+            <p style="color: var(--text-secondary); font-size: 14px;">Ingresa la contraseña para habilitar los controles.</p>
+            <div class="form-group" style="text-align: left;">
+                <input type="password" id="inputLoginPassword" placeholder="Contraseña" onkeypress="handlePasswordEnter(event)">
+            </div>
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button class="btn-secondary" onclick="cancelPasswordLogin()">Cancelar</button>
+                <button class="btn-primary" onclick="verifyPassword()">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2 style="margin-top: 0; color: var(--primary-blue);" id="modalTitle">Registrar Actividad</h2>
+            <div class="form-group">
+                <label>¿Quién registra?</label>
+                <select id="modalAutor">
+                    <option value="Diego">Papá (Diego)</option>
+                    <option value="Maria">Mamá (María)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Resultado</label>
+                    <input type="text" id="modalResultado" readonly style="background: var(--bg-color);">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Puntos a aplicar</label>
+                    <input type="number" id="modalPuntos"  style="background: var(--bg-color);">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Comentario</label>
+                <input type="text" id="modalComentario" placeholder="Ej: Ayudó a organizar su cuarto" required>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveRecord()">Guardar Registro</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ESTADO GLOBAL ---
+        let estadoActual = {
+            idRegistroVigente: "", 
+            meta: 0,
+            puntajeAcumulado: 0,
+            actividades: [],
+            historial: []
+        };
+
+        const coloresTermometro = ['#f02849', '#f05e28', '#f09628', '#f0c828', '#c8f028', '#96f028', '#5ef028', '#31a24c'];
+
+        // --- INICIALIZACIÓN ---
+        window.onload = function() {
+            if (!localStorage.getItem('adminPassword')) localStorage.setItem('adminPassword', 'DiegoMaria');
+            if (getCookie('padresSession') === 'activa') { 
+                document.getElementById('profileToggle').checked = true; 
+                login('Padres'); 
+            } else { 
+                login('Jero'); 
+            }
+            cargarDatosSemana();
+        };
+
+
+
+
+async function cargarDatosSemana() {
+    const urlConsulta = "https://81cac779cb8eed0eb54aa0d5e23b7e.1a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/e7b220347f5a48139ab09bd7b2d13593/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=NsudE8J2nL5ek7bZiouoobq30RADclgwEdWgNAnBuNg";
+    
+    const opcionesFecha = { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' };
+    const formateador = new Intl.DateTimeFormat('en-CA', opcionesFecha); 
+    const fechaActual = formateador.format(new Date());
+
+    const payload = { "fechaActual": fechaActual };
+
+    try {
+        const response = await fetch(urlConsulta, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error("Error en la respuesta del servidor");
+
+        const rawData = await response.json();
+        const data = Array.isArray(rawData) ? rawData[0] : rawData;
+        const registroData = data.body ? (Array.isArray(data.body) ? data.body[0] : data.body) : data;
+
+        if (!registroData) throw new Error("No se encontró el registro semanal");
+
+        // 1. Mapeo de estado básico
+        estadoActual.idRegistroVigente = registroData.coem_registrosemanalid || "";
+        estadoActual.meta = registroData.coem_int_meta || 0;
+        estadoActual.puntajeAcumulado = registroData.coem_int_puntaje || 0;
+        
+        // 2. Procesar Actividades del termómetro
+        if (registroData.coem_actividades && typeof registroData.coem_actividades === 'string') {
+            try { estadoActual.actividades = JSON.parse(registroData.coem_actividades); } 
+            catch (e) { estadoActual.actividades = []; }
+        } else if (registroData.coem_actividades) {
+            estadoActual.actividades = registroData.coem_actividades;
+        }
+
+        // 3. Mapear Historial de seguimiento (respetando orden de Automate)
+        if (registroData.historicoSeguimiento && Array.isArray(registroData.historicoSeguimiento)) {
+            estadoActual.historial = registroData.historicoSeguimiento.map(item => {
+                let resTexto = "Neutro";
+                if (item.resultado === 1) resTexto = "Positivo";
+                else if (item.resultado === 2) resTexto = "Negativo";
+
+                return {
+                    fecha: item.fecha || "S/F",
+                    autor: item.autor || "Sistema",
+                    comentario: item.comentario || "",
+                    resultado: resTexto,
+                    puntos: item.puntos || 0
+                };
+            });
+        } else {
+            estadoActual.historial = [];
+        }
+
+        // --- NUEVO: MANEJO DEL MENSAJE DE IA ---
+        const panelIA = document.getElementById('motivationPanel');
+        const msgIA = document.getElementById('motivationMsg');
+        const iconIA = document.querySelector('.motivation-icon');
+
+        if (registroData.coem_mensaje_ia) {
+            panelIA.style.display = 'flex';
+            msgIA.innerText = `"${registroData.coem_mensaje_ia}"`;
+
+            // Efecto especial si ya llegó a la meta
+            if (estadoActual.puntajeAcumulado >= estadoActual.meta && estadoActual.meta > 0) {
+                panelIA.style.background = 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)'; // Dorado/Naranja
+                if(iconIA) iconIA.innerText = '🏆';
+            } else {
+                panelIA.style.background = 'linear-gradient(135deg, #6e8efb, #a777e3)'; // Azul/Morado
+                if(iconIA) iconIA.innerText = '🚀';
+            }
+        } else {
+            panelIA.style.display = 'none';
+        }
+
+        renderDashboard();
+
+    } catch (error) {
+        console.error("Fallo la conexión:", error);
+        document.getElementById('puntajeDisplay').innerText = "Error";
+        // Uso de notificación moderna en lugar de alert
+        if (typeof showToast === 'function') {
+            showToast("No se pudo sincronizar con la nube", "error");
+        }
+    }
+}
+
+
+
+
+
+
+        // --- MANEJO DE COOKIES Y LOGIN ---
+        function setCookie(name, value, days) {
+            let expires = ""; if (days) { let date = new Date(); date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); expires = "; expires=" + date.toUTCString(); }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+        function getCookie(name) {
+            let nameEQ = name + "="; let ca = document.cookie.split(';');
+            for(let i=0; i < ca.length; i++) { let c = ca[i]; while (c.charAt(0)==' ') c = c.substring(1,c.length); if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length); } 
+            return null;
+        }
+        function showView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            if(viewId === 'viewDashboard') renderDashboard();
+            if(viewId === 'viewConfig') renderConfigView();
+        }
+        function handleProfileToggle(checkbox) {
+            if (checkbox.checked) {
+                if (getCookie('padresSession') === 'activa') login('Padres');
+                else { document.getElementById('modalPasswordOverlay').style.display = 'flex'; document.getElementById('inputLoginPassword').value = ''; document.getElementById('inputLoginPassword').focus(); }
+            } else login('Jero');
+        }
+        function verifyPassword() {
+            const inputPw = document.getElementById('inputLoginPassword').value;
+            const storedPw = localStorage.getItem('adminPassword');
+            if (inputPw === storedPw) { setCookie('padresSession', 'activa', 15); document.getElementById('modalPasswordOverlay').style.display = 'none'; login('Padres'); } 
+            else { alert("Contraseña incorrecta"); document.getElementById('inputLoginPassword').value = ''; }
+        }
+        function cancelPasswordLogin() { document.getElementById('modalPasswordOverlay').style.display = 'none'; document.getElementById('profileToggle').checked = false; }
+        function handlePasswordEnter(e) { if (e.key === 'Enter') verifyPassword(); }
+        function login(perfil) {
+            const esAdmin = perfil === 'Padres';
+            document.getElementById('adminControls').style.display = esAdmin ? 'flex' : 'none';
+            document.getElementById('btnConfig').style.display = esAdmin ? 'inline-flex' : 'none';
+        }
+
+
+function renderDashboard() {
+    // 1. Ordenar actividades (Mayor puntaje arriba)
+    if (estadoActual.actividades && estadoActual.actividades.length > 0) {
+        estadoActual.actividades.sort((a, b) => b.puntajeRequerido - a.puntajeRequerido);
+    }
+    
+    // 2. Actualizar etiquetas de Meta y Puntaje
+    // El CSS se encarga del color gracias a los IDs #metaDisplay y #puntajeDisplay
+    document.getElementById('metaDisplay').innerText = `Meta: ${estadoActual.meta}`;
+    document.getElementById('puntajeDisplay').innerText = `${estadoActual.puntajeAcumulado} pts`;
+    
+    // 3. Renderizar Recompensas
+    const listContainer = document.getElementById('activityList');
+    listContainer.innerHTML = '';
+    
+    estadoActual.actividades.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'activity-item';
+        
+        let colorBorde = 'var(--border-color)';
+        
+        if (estadoActual.puntajeAcumulado >= item.puntajeRequerido) {
+            div.classList.add('reached');
+            const colorIndex = Math.min((estadoActual.actividades.length - 1) - index, coloresTermometro.length - 1);
+            colorBorde = coloresTermometro[colorIndex] || '#31a24c';
+        }
+        
+        div.style.borderLeft = `6px solid ${colorBorde}`;
+        
+        // No ponemos estilos de color aquí, dejamos que el CSS .activity-item lo maneje
+        div.innerHTML = `
+            <span>${item.actividad}</span> 
+            <strong>${item.puntajeRequerido} pts</strong>
+        `;
+        listContainer.appendChild(div);
+    });
+
+    // 4. Renderizar Historial (La tabla que ya te quedó perfecta)
+    const tbody = document.getElementById('historyTableBody');
+    tbody.innerHTML = '';
+
+    if (estadoActual.historial.length === 0) {
+         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                            Aún no hay registros.</td></tr>`;
+    } else {
+        estadoActual.historial.forEach(reg => { 
+            const tr = document.createElement('tr');
+            let colorVar = reg.resultado === 'Positivo' ? 'var(--status-pos)' : 
+                          (reg.resultado === 'Negativo' ? 'var(--status-neg)' : 'var(--text-secondary)');
+            
+            let puntosTexto = reg.puntos > 0 ? `+${reg.puntos}` : reg.puntos;
+
+            tr.innerHTML = `
+                <td style="font-size: 11px; color: var(--text-secondary);">${reg.fecha}</td>
+                <td style="font-weight: 600; color: var(--text-primary);">${reg.autor}</td>
+                <td style="color: var(--text-primary); max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                    ${reg.comentario}
+                </td>
+                <td style="font-weight: bold; color: ${colorVar}; text-align: center;">${puntosTexto}</td>
+                <td style="color: ${colorVar}; font-size: 11px; font-weight: 600;">${reg.resultado}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 5. Actualizar el estado del panel de IA si existe
+    const panelIA = document.getElementById('motivationPanel');
+    if (panelIA) {
+        if (estadoActual.puntajeAcumulado >= estadoActual.meta && estadoActual.meta > 0) {
+            panelIA.classList.add('victory');
+        } else {
+            panelIA.classList.remove('victory');
+        }
+    }
+}
+
+
+
+
+
+        // --- LÓGICA DE REGISTRO (MODAL) Y CONEXIÓN DE ESCRITURA ---
+        function openModal(tipo, puntos) {
+            document.getElementById('modalOverlay').style.display = 'flex';
+            document.getElementById('modalResultado').value = tipo;
+            document.getElementById('modalPuntos').value = puntos;
+            document.getElementById('modalComentario').value = '';
+        }
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+        
+		async function saveRecord() {
+    const comentario = document.getElementById('modalComentario').value;
+    const resultadoTexto = document.getElementById('modalResultado').value;
+    const puntosAgregados = parseInt(document.getElementById('modalPuntos').value);
+    const autor = document.getElementById('modalAutor').value;
+
+    if (!comentario) { alert("El comentario es obligatorio."); return; }
+
+    // 1. ACTUALIZACIÓN OPTIMISTA (INTERFAZ INSTANTÁNEA)
+    const now = new Date();
+    const fechaFormateada = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    
+    // Usamos unshift para que el nuevo registro aparezca arriba del todo
+    estadoActual.historial.unshift({ 
+        fecha: fechaFormateada, 
+        autor: autor, 
+        comentario: comentario, 
+        resultado: resultadoTexto,
+        puntos: puntosAgregados // Agregado para que no salga undefined en la tabla
+    });
+    
+    estadoActual.puntajeAcumulado += puntosAgregados;
+    if (estadoActual.puntajeAcumulado < 0) estadoActual.puntajeAcumulado = 0;
+    
+    closeModal();
+    renderDashboard();
+
+    // 2. ENVÍO A DATAVERSE EN SEGUNDO PLANO
+    let resultadoInt = 0; 
+    if (resultadoTexto === 'Positivo') resultadoInt = 1;
+    if (resultadoTexto === 'Negativo') resultadoInt = 2;
+
+    const payload = {
+        "coem_SeguimientoId": "", 
+        "coem_registrosemanalid": estadoActual.idRegistroVigente,
+        "comentario": comentario,
+        "autor": autor,
+        "puntaje": puntosAgregados,
+        "Resultado": resultadoInt
+    };
+
+    const urlEscritura = "https://81cac779cb8eed0eb54aa0d5e23b7e.1a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9112816c0874440dbf32dad089800d97/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=7Ve2NoIcw3tFGq_VH-DsuTlq5nFqGa2xXZEZI6TfYg8";
+    
+    try {
+        const response = await fetch(urlEscritura, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            console.error("Error 500: Power Automate no pudo procesar el registro.");
+        }
+    } catch (error) {
+        console.error("Fallo de red al intentar guardar en segundo plano:", error);
+    }
+}
+		
+		
+
+        // --- LÓGICA DE CONFIGURACIÓN ---
+        function renderConfigView() {
+            document.getElementById('configMeta').value = estadoActual.meta;
+            document.getElementById('configPassword').value = '';
+            const configList = document.getElementById('configActivityList');
+            configList.innerHTML = '';
+            estadoActual.actividades.forEach((act, index) => { configList.insertAdjacentHTML('beforeend', createConfigRowHTML(act.actividad, act.puntajeRequerido, index)); });
+        }
+        function createConfigRowHTML(nombre, puntos, id) { return `<div class="config-row" id="cfg-row-${id}"><input type="text" class="cfg-name" value="${nombre}" placeholder="Actividad"><input type="number" class="cfg-points" value="${puntos}" placeholder="Pts"><button class="btn-negative btn-icon" onclick="document.getElementById('cfg-row-${id}').remove()" title="Eliminar">🗑️</button></div>`; }
+        function addConfigRow() { const newId = Date.now(); document.getElementById('configActivityList').insertAdjacentHTML('beforeend', createConfigRowHTML('', '', newId)); }
+        
+		
+async function saveConfig() {
+            const nuevaClave = document.getElementById('configPassword').value;
+            if (nuevaClave.trim() !== '') localStorage.setItem('adminPassword', nuevaClave);
+            
+            const nuevaMeta = parseInt(document.getElementById('configMeta').value) || 0;
+            const rows = document.querySelectorAll('.config-row');
+            const nuevasActividades = [];
+            
+            rows.forEach(row => {
+                const nombre = row.querySelector('.cfg-name').value.trim();
+                const puntos = parseInt(row.querySelector('.cfg-points').value);
+                if(nombre && !isNaN(puntos)) nuevasActividades.push({ actividad: nombre, puntajeRequerido: puntos });
+            });
+
+            const payload = {
+                "coem_registrosemanalid": estadoActual.idRegistroVigente,
+                "coem_int_meta": nuevaMeta,
+                "coem_actividades": JSON.stringify(nuevasActividades)
+            };
+
+            const urlConfig = "https://81cac779cb8eed0eb54aa0d5e23b7e.1a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/d1efaf8f23864c5d89aad95120a1dd60/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=hzvlo1P_G_9HM_AG35l_jlIDwBcz9LDovXa4FHvzFtQ";
+
+            try {
+                const btnSave = document.querySelector('#viewConfig .btn-primary');
+                btnSave.innerText = "Guardando cambios...";
+                btnSave.disabled = true;
+
+                // 1. Enviamos la actualización a Power Automate
+                const response = await fetch(urlConfig, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("Error al guardar la configuración");
+
+                // 2. RE-CONSULTA (Camino 2): Traemos los datos frescos de la nube
+                btnSave.innerText = "Sincronizando tablero...";
+                await cargarDatosSemana(); 
+
+                alert("¡Configuración guardada y sincronizada!");
+                showView('viewDashboard');
+
+            } catch (error) {
+                console.error("Error en configuración:", error);
+                alert("Hubo un error al sincronizar con la nube. Intenta de nuevo.");
+            } finally {
+                const btnSave = document.querySelector('#viewConfig .btn-primary');
+                btnSave.innerText = "Guardar Configuración";
+                btnSave.disabled = false;
+            }
+        }
+		
+		function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500); // Limpia el DOM después de la animación
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('themeToggle');
+    
+    // Cambiar el icono
+    btn.innerText = isDark ? '☀️' : '🌙';
+    
+    // Guardar preferencia
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    
+    // Notificación moderna (opcional)
+    showToast(`Modo ${isDark ? 'Oscuro' : 'Claro'} activado`);
+}
+
+// Cargar el tema guardado al iniciar la app
+window.onload = function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeToggle').innerText = '☀️';
+    }
+    cargarDatosSemana(); // Tu función de carga inicial
+};
+    </script>
+</body>
+</html>
