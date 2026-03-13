@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seguimiento de Jero</title>
     <style>
-        /* --- VARIABLES GLOBALES (THEMING) --- */
+
+/* --- VARIABLES GLOBALES (THEMING) --- */
         :root {
             --bg-color: #f0f2f5;
             --card-bg: #ffffff;
@@ -50,14 +51,25 @@
 
         /* --- ESTILOS BASE --- */
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
         body { 
             background-color: var(--bg-color); 
             color: var(--text-primary);
-            margin: 0; padding: 20px; 
-            display: flex; justify-content: center; min-height: 100vh;
+            margin: 0; 
+            padding: 20px; 
+            /* CORRECCIÓN: Eliminamos el display:flex de aquí para evitar el desfase de la barra de scroll */
+            min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
         }
-        .main-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .main-container { 
+            width: 100%; 
+            max-width: 1200px; 
+            margin: 0 auto; /* Centrado clásico y exacto */
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
         
         /* --- ESTRUCTURA Y PANELES --- */
         .view-section { display: none; animation: fadeIn 0.3s ease; }
@@ -120,14 +132,13 @@
             padding: 12px 15px; border-radius: 10px;
             display: flex; justify-content: space-between; align-items: center;
             transition: all 0.3s ease; 
-            /* CORRECCIÓN: Usamos opacidad en lugar de color secundario para mantener legibilidad */
             opacity: 0.55; 
         }
         .activity-item span, .activity-item strong { 
-            color: var(--text-primary); /* Forzamos color primario siempre */
+            color: var(--text-primary); 
         }
         .activity-item.reached { 
-            opacity: 1; /* Se ilumina al alcanzar los puntos */
+            opacity: 1; 
             box-shadow: var(--shadow); 
             transform: translateX(5px); 
         }
@@ -182,26 +193,64 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(150%); opacity: 0; } }
 
-        /* --- RESPONSIVE / MOBILE FIXES --- */
+        /* =========================================================
+           --- MEDIA QUERIES CORREGIDOS (RESPONSIVE) ---
+           ========================================================= */
+
+        /* 1. MÓVILES (Menos de 768px) */
         @media (max-width: 768px) {
-            body { padding: 10px; } /* Menos margen en la pantalla */
-            .content-grid { grid-template-columns: 1fr; gap: 15px; }
-            .panel { padding: 15px; } /* Paneles más amplios en celular */
-            
-            /* Arreglo del encabezado para que no se amontone */
-            .header-card { flex-direction: column; gap: 15px; padding: 15px; text-align: center; }
-            .user-controls { width: 100%; justify-content: center; gap: 15px; }
-            
-            /* Arreglo de los botones inferiores */
-            .action-buttons { gap: 8px; }
-            .action-buttons button { flex: 1; min-width: 100px; padding: 10px 5px; font-size: 13px; }
-            
-            /* Reducción de fuente en la tabla para que encaje mejor */
-            th, td { padding: 10px 5px; font-size: 12px; }
-            
-            .config-row { grid-template-columns: 1fr 1fr auto; }
+            body { 
+                padding: 15px 10px; /* Margen uniforme en celulares */
+            }
+            .main-container { 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                margin: 0 auto !important; 
+            }
+            .content-grid { 
+                grid-template-columns: 1fr; 
+                gap: 15px; 
+            }
+            .panel { 
+                padding: 15px; 
+            }
+            .header-card { 
+                flex-direction: column; 
+                gap: 15px; 
+                padding: 15px; 
+                text-align: center; 
+            }
+            .user-controls { 
+                width: 100%; 
+                justify-content: center; 
+                gap: 15px; 
+            }
+            .action-buttons { 
+                gap: 8px; 
+            }
+            .action-buttons button { 
+                flex: 1; 
+                min-width: 100px; 
+                padding: 10px 5px; 
+                font-size: 13px; 
+            }
+            th, td { 
+                padding: 10px 5px; 
+                font-size: 12px; 
+            }
+            .config-row { 
+                grid-template-columns: 1fr 1fr auto; 
+            }
         }
-		
+
+        /* 2. TABLETS Y LAPTOPS (Más de 768px) */
+        @media (min-width: 769px) {
+            .main-container {
+                width: 80% !important; 
+                max-width: 1200px !important; 
+                margin: 0 auto !important;
+            }
+        }
 		
     </style>
 </head>
